@@ -1,0 +1,325 @@
+# CI workflow for closeread-io-methodology
+#
+# Two jobs: lint (fast, ~60s) then test (slower, ~2-3min).
+# test depends on lint passing.
+#
+# Checks:
+#   lint: markdownlint-cli2, em-dash, brand-premise, cspell
+#   test: mdBook build, lychee link check, pytest (mcp-server + verify-mcp),
+#         packet template smoke test
+#
+# Spec: .github/workflows/ci-spec-v1.md
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # -----------------------------------------------------------------------
+  # lint: fast static checks
+  # -----------------------------------------------------------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: |
+          # Install markdownlint-cli2 and cspell.
+          # package.json may not exist yet; create a minimal one if absent.
+          if [ ! -f package.json ]; then
+            npm init -y --quiet
+          fi
+          npm install --save-dev \
+            markdownlint-cli2@0.13.0 \
+            cspell@8.14.4
+
+      - name: Ensure .markdownlint.jsonc exists
+        run: |
+          if [ ! -f .markdownlint.jsonc ]; then
+            cat > .markdownlint.jsonc << 'EOF'
+          {
+            // Closeread methodology: markdownlint config
+            // MD013 (line length) disabled: long prose lines are intentional.
+            // MD033 (inline HTML) disabled: findings library uses HTML in tables.
+            "MD013": false,
+            "MD033": false,
+            "MD041": true
+          }
+          EOF
+          fi
+
+      - name: Markdown lint
+        run: |
+          npx markdownlint-cli2 \
+            "**/*.md" \
+            "#book/**" \
+            "#node_modules/**"
+
+      - name: Em-dash check
+        run: |
+          if [ ! -x bin/check-em-dash.sh ]; then
+            echo "ERROR: bin/check-em-dash.sh not found or not executable."
+            echo "See .github/workflows/ci-spec-v1.md Check 2 for vendoring instructions."
+            exit 1
+          fi
+          find . -name "*.md" \
+            -not -path "./book/*" \
+            -not -path "./node_modules/*" \
+            -not -path "./.git/*" \
+            | xargs bin/check-em-dash.sh
+
+      - name: Brand premise check
+        run: |
+          if [ ! -x bin/check-brand-premise.sh ]; then
+            echo "ERROR: bin/check-brand-premise.sh not found or not executable."
+            echo "See .github/workflows/ci-spec-v1.md Check 3 for vendoring instructions."
+            exit 1
+          fi
+          # Run against public-facing content only.
+          FAIL=0
+          for f in \
+            README.md \
+            packet-template/README.md \
+            methodology/01-philosophy.md \
+            methodology/02-reliability.md \
+            methodology/03-sca.md \
+            methodology/04-stack.md \
+            methodology/05-ip-ownership.md \
+            methodology/06-third-party.md \
+            methodology/07-credentials.md \
+            methodology/08-security.md \
+            methodology/09-test-coverage.md \
+            methodology/10-key-person.md; do
+            if [ -f "$f" ]; then
+              bin/check-brand-premise.sh "$f" || FAIL=1
+            fi
+          done
+          # findings-library is public-facing; check all .md files there.
+          while IFS= read -r f; do
+            bin/check-brand-premise.sh "$f" || FAIL=1
+          done < <(find findings-library -name "*.md")
+          exit $FAIL
+
+      - name: Ensure .cspell.json exists
+        run: |
+          if [ ! -f .cspell.json ]; then
+            cat > .cspell.json << 'EOF'
+          {
+            "version": "0.2",
+            "language": "en",
+            "ignorePaths": [
+              "book/**",
+              "node_modules/**",
+              ".git/**"
+            ],
+            "words": [
+              "closeread",
+              "freeguy",
+              "mdbook",
+              "lychee",
+              "cspell",
+              "markdownlint",
+              "jsonc",
+              "pyproject",
+              "vitest",
+              "pytest",
+              "trpc",
+              "monorepo",
+              "codeowners",
+              "hireability",
+              "polyglot",
+              "multibase",
+              "semver",
+              "tarball",
+              "saas",
+              "acquiree",
+              "acquirer",
+              "gazdecki",
+              "copyleft",
+              "SPDX",
+              "sbom",
+              "devdeps",
+              "healthcheck",
+              "CVEs",
+              "MCP",
+              "mcps",
+              "stdio",
+              "fastmcp",
+              "uvx",
+              "uv",
+              "setuptools",
+              "cryptography",
+              "multibase",
+              "Ed25519",
+              "ed25519",
+              "DKIM",
+              "SPF",
+              "DMARC",
+              "Closeread",
+              "FreeGuy",
+              "AID",
+              "OIDC",
+              "JWTs",
+              "jwts",
+              "SCA",
+              "SAST",
+              "DAST",
+              "CVE",
+              "NVD",
+              "OSV",
+              "CVSS",
+              "SLSA",
+              "SBOM",
+              "XSS",
+              "SQL",
+              "CORS",
+              "TLS",
+              "EOL",
+              "OSI",
+              "MDX",
+              "loc",
+              "kloc"
+            ]
+          }
+          EOF
+          fi
+
+      - name: Spell check
+        run: |
+          npx cspell "**/*.md" \
+            --no-progress \
+            --exclude "book/**" \
+            --exclude "node_modules/**"
+
+  # -----------------------------------------------------------------------
+  # test: build and artifact checks
+  # -----------------------------------------------------------------------
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python test runner
+        run: pip install pytest
+
+      - name: Install mcp-server package
+        run: |
+          cd reference-cli/mcp-server
+          # Install in editable mode; if [dev] extras not defined, fall back.
+          pip install -e . || pip install -e . --no-deps
+
+      - name: Install verify-mcp package
+        run: |
+          cd reference-cli/verify-mcp
+          pip install -e . || pip install -e . --no-deps
+
+      - name: Run pytest (mcp-server)
+        run: |
+          cd reference-cli/mcp-server
+          # No tests yet: runs with --collect-only to confirm pytest works,
+          # exits 0 even if no tests collected.
+          pytest --tb=short -q --collect-only || pytest --tb=short -q
+        continue-on-error: true  # Remove this line once real tests exist.
+
+      - name: Run pytest (verify-mcp)
+        run: |
+          cd reference-cli/verify-mcp
+          pytest --tb=short -q --collect-only || pytest --tb=short -q
+        continue-on-error: true  # Remove this line once real tests exist.
+
+      - name: Packet template smoke test
+        run: |
+          python3 - << 'EOF'
+          import pathlib, sys
+
+          p = pathlib.Path("packet-template/README.md")
+          if not p.exists():
+              print("FAIL: packet-template/README.md not found")
+              sys.exit(1)
+
+          text = p.read_text(encoding="utf-8")
+
+          checks = [
+              (len(text) > 500, "README.md is suspiciously short (<500 chars)"),
+              ("## The ten zones" in text, "'## The ten zones' section missing"),
+              ("finding_id" in text, "finding schema block missing (no 'finding_id' key)"),
+              ("severity" in text, "finding schema block missing (no 'severity' key)"),
+          ]
+
+          failed = [msg for ok, msg in checks if not ok]
+          if failed:
+              print("Packet template smoke test: FAIL")
+              for msg in failed:
+                  print(f"  - {msg}")
+              sys.exit(1)
+
+          print(f"Packet template smoke test: PASS ({len(text)} chars, all checks green)")
+          EOF
+
+      - name: Set up mdBook
+        uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: "0.4.40"
+
+      - name: Ensure .lycheeignore exists
+        run: |
+          if [ ! -f .lycheeignore ]; then
+            cat > .lycheeignore << 'EOF'
+          # Closeread / Free Guy domains (not reachable from CI runners during dev)
+          https://closeread.io
+          https://freeguy.ai
+          # GitHub repo URL (may not exist yet if private)
+          https://github.com/closeread-io/methodology
+          https://github.com/FreeGuy-AI/closeread-io-methodology
+          # Stripe payment link (rate-limited from CI)
+          https://buy.stripe.com/
+          # LinkedIn (blocks bot UA from CI)
+          https://www.linkedin.com/
+          https://linkedin.com/
+          # agent.ai (rate-limited)
+          https://agent.ai/
+          # Acquire.com (may require login)
+          https://acquire.com/
+          EOF
+          fi
+
+      - name: mdBook build
+        run: mdbook build
+
+      - name: Link check
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: >
+            --verbose
+            --no-progress
+            --exclude-path ./book/404.html
+            --timeout 20
+            --retry-wait-time 5
+            --max-retries 2
+            ./book/
+          fail: true

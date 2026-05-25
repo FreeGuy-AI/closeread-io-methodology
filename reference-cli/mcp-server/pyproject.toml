@@ -1,0 +1,48 @@
+[project]
+name = "closeread-audit-mcp"
+version = "0.1.0"
+description = "MCP server exposing the Closeread methodology's deterministic audit pipeline. Local-only, no LLM, no telemetry."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Free Guy", email = "freeguy@closeread.io" },
+    { name = "Command Center Consulting LLC", email = "jared@commandcenter.consulting" },
+]
+requires-python = ">=3.12"
+keywords = ["mcp", "audit", "due-diligence", "closeread", "saas", "acquire.com"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    # The audit pipeline + scanner registry. Pinned to the released
+    # closeread package; install with `pip install closeread>=0.3` OR
+    # set up the parent repo locally.
+    "closeread>=0.3",
+]
+
+[project.urls]
+Homepage = "https://closeread.io"
+Documentation = "https://github.com/FreeGuy-AI/closeread-io-methodology"
+Repository = "https://github.com/FreeGuy-AI/closeread-io-methodology"
+"Bug Tracker" = "https://github.com/FreeGuy-AI/closeread-io-methodology/issues"
+
+[project.scripts]
+# This is what `uvx closeread-audit-mcp` runs. The function lives in
+# server.py and accepts a stdio JSON-RPC stream per the MCP spec.
+closeread-audit-mcp = "closeread_audit_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["closeread_audit_mcp*"]
+
+[tool.setuptools.package-data]
+closeread_audit_mcp = ["*.md"]

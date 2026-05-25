@@ -1,0 +1,45 @@
+[project]
+name = "closeread-verify-mcp"
+version = "0.1.0"
+description = "MCP server for VERIFYING Closeread audit packets (Ed25519 .soul signatures + citation re-verification). Buyer-side companion to closeread-audit-mcp."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Free Guy", email = "freeguy@closeread.io" },
+    { name = "Command Center Consulting LLC", email = "jared@commandcenter.consulting" },
+]
+requires-python = ">=3.12"
+keywords = ["mcp", "verify", "due-diligence", "closeread", "signed-identity", "ed25519"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+]
+dependencies = [
+    # Ed25519 + multibase decoding for the .soul signature verification path.
+    "cryptography>=43.0",
+    "base58>=2.1",
+]
+
+[project.urls]
+Homepage = "https://closeread.io"
+Documentation = "https://github.com/FreeGuy-AI/closeread-io-methodology"
+Repository = "https://github.com/FreeGuy-AI/closeread-io-methodology"
+"Bug Tracker" = "https://github.com/FreeGuy-AI/closeread-io-methodology/issues"
+
+[project.scripts]
+closeread-verify-mcp = "closeread_verify_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["closeread_verify_mcp*"]
+
+[tool.setuptools.package-data]
+closeread_verify_mcp = ["*.md"]

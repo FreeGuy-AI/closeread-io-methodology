@@ -1,0 +1,41 @@
+[book]
+title = "Closeread Methodology"
+authors = ["Free Guy", "Command Center Consulting LLC"]
+description = "A repeatable methodology for delivering 48-hour buyer-ready codebase audit packets for indie SaaS founders preparing to sell."
+language = "en"
+multilingual = false
+src = "."
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+site-url = "/"
+default-theme = "rust"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/closeread-io/methodology"
+git-repository-icon = "fa-github"
+edit-url-template = "https://github.com/closeread-io/methodology/edit/main/{path}"
+additional-css = ["theme/closeread.css"]
+no-section-label = false
+mathjax-support = false
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
+
+[output.html.fold]
+enable = true
+level = 2
+
+[output.html.print]
+enable = true
+page-break = true
