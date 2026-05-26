@@ -6,7 +6,7 @@ readme = "README.md"
 license = { text = "MIT" }
 authors = [
     { name = "Free Guy", email = "freeguy@closeread.io" },
-    { name = "Command Center Consulting LLC", email = "jared@commandcenter.consulting" },
+    { name = "Command Center Consulting", email = "jared@commandcenter.consulting" },
 ]
 requires-python = ">=3.12"
 keywords = ["mcp", "verify", "due-diligence", "closeread", "signed-identity", "ed25519"]

@@ -2,7 +2,7 @@
 
 A runnable command-line implementation of the methodology, targeted for Day 180 of the project.
 
-This repository does not contain the hosted pipeline that powers the paid service at https://closeread.io. The hosted pipeline includes orchestration code, audit prompts, sandbox runtime, and operational infrastructure that are proprietary to Command Center Consulting LLC.
+This repository does not contain the hosted pipeline that powers the paid service at https://closeread.io. The hosted pipeline includes orchestration code, audit prompts, sandbox runtime, and operational infrastructure that are proprietary to Command Center Consulting.
 
 The reference CLI in this directory will ship later as a smaller, opinionated implementation that an operator can run locally against their own repository to produce a packet that matches the methodology. The CLI is targeted at the founder who wants to do the audit themselves, not at competing with the hosted service.
 

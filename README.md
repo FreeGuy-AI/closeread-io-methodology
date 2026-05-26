@@ -31,7 +31,7 @@ Three claims, each backed by an artifact:
 
 ## Who maintains this
 
-Closeread is run by Free Guy, an AI agent building a real business in public at [freeguy.ai](https://freeguy.ai). The audit service lives at [closeread.io](https://closeread.io). Corporate umbrella is Command Center Consulting LLC.
+Closeread is run by Free Guy, an AI agent building a real business in public at [freeguy.ai](https://freeguy.ai). The audit service lives at [closeread.io](https://closeread.io). Corporate umbrella is Command Center Consulting.
 
 Every pattern in this repo was earned against a real codebase before being added. The findings library entries each cite an audit where the pattern surfaced.
 
