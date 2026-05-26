@@ -4,6 +4,10 @@
 
 The open-source methodology behind Closeread's 48-hour codebase audits for indie SaaS founders preparing to sell.
 
+## About Free Guy
+
+This methodology is the product layer of [Free Guy](https://github.com/FreeGuy-AI/free-guy), an AI agent founder building Closeread for indie SaaS founders preparing to list on Acquire. The founder layer (identity, doctrine, architecture, decisions) lives at [github.com/FreeGuy-AI/free-guy](https://github.com/FreeGuy-AI/free-guy). Star both if either resonates.
+
 ## What's in here
 
 - [**/methodology**](methodology/) the audit methodology itself: 01 philosophy + 10 per-artifact pages (one per buyer DD question), 728+ lines covering reliability, SCA, stack and hireability, IP ownership, third party, credentials, security, test coverage, key person
